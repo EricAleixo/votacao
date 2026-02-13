@@ -8,6 +8,13 @@
       "when": 1771004391247,
       "tag": "0000_curved_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771012564581,
+      "tag": "0001_lethal_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

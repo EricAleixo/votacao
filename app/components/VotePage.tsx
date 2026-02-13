@@ -152,12 +152,6 @@ export const VotePage = () => {
             <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-5 py-3 rounded-2xl shadow-lg animate-slideDown">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-lg font-semibold flex-1">🎉 Voto registrado com sucesso!</span>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="shrink-0 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 text-sm font-medium transition-colors"
-                >
-                  Votar novamente
-                </button>
               </div>
             </div>
           </div>
