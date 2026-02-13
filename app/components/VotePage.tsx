@@ -1,5 +1,6 @@
 "use client"
 
+import { getDeviceFingerprint } from '@/src/lib/DeviceFingerPrint';
 import { useState, useEffect } from 'react';
 
 // Tipo para os candidatos
@@ -17,13 +18,13 @@ async function fetchCandidates(): Promise<Candidate[]> {
   return res.json();
 }
 
-async function votar(candidateId: number) {
+async function votar(candidateId: number, deviceId: string) {
   const res = await fetch("/api/vote", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ candidateId }),
+    body: JSON.stringify({ candidateId, deviceId }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -42,6 +43,23 @@ export const VotePage = () => {
   const [isVoting, setIsVoting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [deviceId, setDeviceId] = useState<string>("");
+
+  // Gera o device fingerprint ao montar o componente
+  useEffect(() => {
+    const initDeviceId = async () => {
+      try {
+        const id = await getDeviceFingerprint();
+        setDeviceId(id);
+      } catch (error) {
+        console.error("Erro ao gerar device ID:", error);
+        // Fallback para um ID aleatório se falhar
+        setDeviceId(`fallback-${Math.random().toString(36).substring(7)}`);
+      }
+    };
+
+    initDeviceId();
+  }, []);
 
   // Carrega os candidatos ao montar o componente
   useEffect(() => {
@@ -62,13 +80,13 @@ export const VotePage = () => {
   }, []);
 
   const handleVote = async () => {
-    if (!selectedCandidate || isVoting) return;
+    if (!selectedCandidate || isVoting || !deviceId) return;
 
     setIsVoting(true);
     setErrorMessage("");
 
     try {
-      await votar(selectedCandidate.id);
+      await votar(selectedCandidate.id, deviceId);
       
       setHasVoted(true);
       setShowSuccessModal(true);
@@ -134,6 +152,12 @@ export const VotePage = () => {
             <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-5 py-3 rounded-2xl shadow-lg animate-slideDown">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-lg font-semibold flex-1">🎉 Voto registrado com sucesso!</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="shrink-0 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 text-sm font-medium transition-colors"
+                >
+                  Votar novamente
+                </button>
               </div>
             </div>
           </div>
@@ -318,22 +342,24 @@ export const VotePage = () => {
             )}
             <button
               onClick={handleVote}
-              disabled={!selectedCandidate || isVoting}
+              disabled={!selectedCandidate || isVoting || !deviceId}
               className={`
                 w-full px-8 py-4 rounded-2xl font-bold text-base
                 transform transition-all duration-200
                 active:scale-95
-                ${selectedCandidate && !isVoting
+                ${selectedCandidate && !isVoting && deviceId
                   ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 shadow-xl hover:shadow-2xl'
                   : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
                 }
               `}
             >
-              {isVoting 
-                ? '⏳ Registrando voto...' 
-                : selectedCandidate 
-                  ? `🎉 Votar em ${selectedCandidate.costume}` 
-                  : '🎭 Selecione uma fantasia'
+              {!deviceId
+                ? '🔄 Preparando...'
+                : isVoting 
+                  ? '⏳ Registrando voto...' 
+                  : selectedCandidate 
+                    ? `🎉 Votar em ${selectedCandidate.costume}` 
+                    : '🎭 Selecione uma fantasia'
               }
             </button>
           </div>

@@ -1,27 +1,22 @@
-import {
-  pgTable,
-  serial,
-  integer,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, unique } from "drizzle-orm/pg-core";
 
 export const candidates = pgTable("candidates", {
   id: serial("id").primaryKey(),
   costume: text("costume").notNull(),
   photo: text("photo").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const votes = pgTable(
-  "votes",
-  {
-    id: serial("id").primaryKey(),
-    candidateId: integer("candidate_id")
-      .notNull()
-      .references(() => candidates.id),
-    voterIp: text("voter_ip").notNull(),
-  },
-  (table) => [
-    uniqueIndex("unique_vote_per_ip").on(table.voterIp),
-  ]
-);
+export const votes = pgTable("votes", {
+  id: serial("id").primaryKey(),
+  candidateId: integer("candidate_id")
+    .notNull()
+    .references(() => candidates.id, { onDelete: "cascade" }),
+  deviceId: text("device_id").notNull(), // Mudou de voterIp para deviceId
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // Constraint única: um dispositivo só pode votar uma vez
+    uniqueVotePerDevice: unique("unique_vote_per_device").on(table.deviceId),
+  };
+});
